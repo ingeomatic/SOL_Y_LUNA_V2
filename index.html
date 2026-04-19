@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Inmobiliario — GeoPortal</title>
+    
+    <!-- Mapbox GL JS CSS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    <!-- Mapbox GL Draw CSS -->
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css">
+    <!-- Mapbox GL Geocoder CSS -->
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS personalizado -->
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <!-- Header principal v2.0 -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="logo.png" alt="Logo" class="logo-image" onerror="this.style.display='none'">
+                <h1 class="logo-text">
+                    <i class="fas fa-building" style="font-size:18px; color:var(--brand-200);"></i> <span id="header-empresa-nombre">SISTEMA INMOBILIARIO</span>
+                    
+                    
+                </h1>
+            </div>
+            <div class="header-geocoder">
+                <div id="geocoder-container"></div>
+            </div>
+            <button class="header-menu-toggle" id="header-menu-toggle" title="Menú"><i class="fas fa-bars"></i></button>
+            <div class="header-actions" id="header-actions">
+                <button class="header-btn" id="info-btn" title="Información del Sistema">
+                    <i class="fas fa-circle-info"></i>
+                    <span class="header-btn-label">Información</span>
+                </button>
+                <button class="header-btn" id="export-excel-btn" title="Exportar Excel">
+                    <i class="fas fa-table"></i>
+                    <span class="header-btn-label">Exportar Excel</span>
+                </button>
+                <button class="header-btn" id="cobros-btn" title="Cobros y Facturación">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span class="header-btn-label">Cobros</span>
+                </button>
+                <button class="header-btn" id="dashboard-btn" title="Dashboard">
+                    <i class="fas fa-chart-pie"></i>
+                    <span class="header-btn-label">Dashboard</span>
+                </button>
+                <button class="header-btn" id="reportes-btn" title="Reportes">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="header-btn-label">Reportes</span>
+                </button>
+                <button class="header-btn" id="user-btn" title="Mi Cuenta">
+                    <i class="fas fa-circle-user"></i>
+                    <span class="header-btn-label">Mi Cuenta</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor principal del mapa -->
+    <div id="map"></div>
+    
+    <!-- Panel lateral de control de capas -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-layer-group"></i> Control de Capas</h2>
+            <button class="close-btn" id="close-sidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-content">
+            <!-- Sección de Urbanizaciones -->
+            <div class="layer-section">
+                <div class="section-header">
+                    <i class="fas fa-city"></i>
+                    <h3>Urbanizaciones</h3>
+                </div>
+                <div id="urb-layers" class="layer-list"></div>
+            </div>
+            
+            <!-- Separador visual -->
+            <div class="section-divider"></div>
+            
+            <!-- Sección de Capas Adicionales (Rutas, Centros y Fotos) -->
+            <div class="layer-section">
+                <div class="section-header">
+                    <i class="fas fa-map-signs"></i>
+                    <h3>Capas Adicionales</h3>
+                </div>
+                <div id="additional-layers" class="layer-list">
+                    <!-- Capa de Rutas -->
+                    <div class="layer-item">
+                        <input type="checkbox" id="layer-rutas">
+                        <label for="layer-rutas">Rutas</label>
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <!-- Capa de Centros -->
+                    <div class="layer-item">
+                        <input type="checkbox" id="layer-centros">
+                        <label for="layer-centros">Centros</label>
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <!-- ✨ NUEVA: Capa de Fotos -->
+                    <div class="layer-item">
+                        <input type="checkbox" id="layer-fotos">
+                        <label for="layer-fotos">Fotos</label>
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Separador visual -->
+            <div class="section-divider"></div>
+            
+            <!-- Sección de Capas Base -->
+            <div class="layer-section">
+                <div class="section-header">
+                    <i class="fas fa-map"></i>
+                    <h3>Capas Base</h3>
+                </div>
+                <div id="base-layers" class="layer-list"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Panel lateral de leyenda (HORIZONTAL EN LA PARTE INFERIOR) -->
+    <aside class="sidebar-legend" id="sidebar-legend">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-palette"></i> ESTADO DE LOTES</h2>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-color" style="background: #3ac91d;"></span>
+                    <span>DISPONIBLE</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background: #ffd900;"></span>
+                    <span>RESERVADO</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background: #ff0000;"></span>
+                    <span>VENDIDO</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Botón flotante para abrir/cerrar panel de capas -->
+    <button class="fab fab-layers" id="toggle-sidebar" title="Control de Capas">
+        <i class="fas fa-layer-group" style="font-size:17px;"></i>
+    </button>
+
+    <!-- Botón flotante de WhatsApp -->
+    <button class="fab fab-whatsapp" id="whatsapp-btn" title="Contactar por WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </button>
+
+    <!-- Banner flotante de selección desde mapa (visible solo en modo selección) -->
+    <div id="mapa-seleccion-banner" class="seleccion-banner" style="display: none;">
+        <i class="fas fa-crosshairs seleccion-banner-icon"></i>
+        <span>Haga clic sobre el lote en el mapa</span>
+        <button id="cancelar-seleccion-mapa-banner-btn" class="banner-cancelar-btn">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+    </div>
+    
+    <!-- Contenedor para mostrar mediciones -->
+    <div id="measure-container" class="measure-panel">
+        <div class="measure-header">
+            <i class="fas fa-ruler"></i>
+            <span>Medición</span>
+        </div>
+        <div id="measure-result"></div>
+    </div>
+
+    <!-- ✨ Modal de Login/Usuario -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-circle"></i> <span id="modal-title">Iniciar Sesión</span></h2>
+                <button class="modal-close" id="close-user-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Formulario de Login -->
+                <div id="login-form-container">
+                    <form id="login-form" class="login-form">
+                        <div class="error-message" id="login-error"></div>
+                        
+                        <div class="form-group">
+                            <label for="username">
+                                <i class="fas fa-user"></i> Usuario
+                            </label>
+                            <input type="text" id="username" placeholder="Ingrese su usuario" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">
+                                <i class="fas fa-lock"></i> Contraseña
+                            </label>
+                            <input type="password" id="password" placeholder="Ingrese su contraseña" required>
+                        </div>
+
+                        <button type="submit" class="login-btn">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Información de usuario logueado -->
+                <div id="user-info-container" style="display: none;">
+                    <div class="user-info">
+                        <p>Sesión activa</p>
+                        <p class="username" id="logged-username"></p>
+                    </div>
+                    <p style="color: var(--text-medium); font-size: 13px; margin-bottom: 15px;" id="user-access-message">
+    <i class="fas fa-check-circle" style="color: var(--success-color);"></i>
+    <span id="access-level-text">Tienes acceso completo a todas las funcionalidades del sistema.</span>
+</p>
+                    <button class="logout-btn" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de información -->
+    <div id="info-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> Información del sistema</h2>
+                <button class="modal-close" id="close-info-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Sistema Inmobiliario — Plataforma de Administración y Gestión de Lotes</strong></p>
+                <p></p>
+                <ul>
+                    <li><i class="fas fa-check"></i> ADMINISTRA LOTES</li>
+                    <li><i class="fas fa-check"></i> ADMINISTRA TUS VENTAS</li>
+    
+                </ul>
+                <p style="margin-top: 15px; padding: 10px; background: #f1f5f9; border-radius: 8px; font-size: 12px;">
+                    <strong>Desarrollado por:</strong> INGEOMATIC.TECH ©2026. Todos los derechos reservados.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📄 Modal para formulario de reporte -->
+    <div id="reporte-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-pdf"></i> Generar Reporte de Lote</h2>
+                <button class="modal-close" id="close-reporte-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="reporte-form">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                            <i class="fas fa-tag"></i> Lote N°
+                        </label>
+                        <input type="text" id="form-lote" readonly style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-weight: 600;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                            <i class="fas fa-th"></i> Manzano N°
+                        </label>
+                        <input type="text" id="form-manzano" readonly style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-weight: 600;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                            <i class="fas fa-ruler-combined"></i> Superficie (m²)
+                        </label>
+                        <input type="text" id="form-Supm2" readonly style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-weight: 600;">
+                    </div>
+
+                    <div style="border-top: 2px solid #e2e8f0; margin: 20px 0; padding-top: 15px;">
+                        <h3 style="color: var(--primary-color); font-size: 16px; margin-bottom: 15px;">
+                            <i class="fas fa-hand-holding-usd"></i> Precio al Contado
+                        </h3>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                                <i class="fas fa-dollar-sign"></i> Precio Total (Dolares $ - Bolivianos )
+                            </label>
+                            <input type="number" id="form-precio-contado" placeholder="" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+                    </div>
+
+                    <div style="border-top: 2px solid #e2e8f0; margin: 20px 0; padding-top: 15px;">
+                        <h3 style="color: var(--primary-color); font-size: 16px; margin-bottom: 15px;">
+                            <i class="fas fa-credit-card"></i> Precio a Crédito (Dolares $ - Bolivianos )
+                        </h3>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                                <i class="fas fa-dollar-sign"></i> Precio Total (Dolares $ - Bolivianos )
+                            </label>
+                            <input type="number" id="form-precio" placeholder="" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                            <i class="fas fa-money-bill-wave"></i> Cuota Inicial (Bs)
+                        </label>
+                        <input type="number" id="form-cuota-inicial" placeholder="" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                                <i class="fas fa-calendar-alt"></i> Plazo (años)
+                            </label>
+                            <input type="number" id="form-plazo-anos" placeholder="" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                                <i class="fas fa-coins"></i> Cuota Mensual (Bs)
+                            </label>
+                            <input type="number" id="form-cuota-mensual" placeholder="" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+                    </div>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                            <i class="fas fa-wrench"></i> Servicios Disponibles
+                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" value="Agua Potable" style="width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-size: 14px;"><i class="fas fa-tint" style="color:#3b82f6;"></i> Agua Potable</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" value="Luz Eléctrica" style="width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-size: 14px;"><i class="fas fa-bolt" style="color:#f59e0b;"></i> Luz Eléctrica</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" value="Alcantarillado" style="width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-size: 14px;"><i class="fas fa-water" style="color:#06b6d4;"></i> Alcantarillado</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" value="Transporte Público" style="width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-size: 14px;"><i class="fas fa-bus" style="color:#10b981;"></i> Transporte Público</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color);">
+                            <i class="fas fa-comment-dots"></i> Observaciones
+                        </label>
+                        <textarea id="form-observaciones" rows="3" placeholder="Información adicional sobre el lote..." style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; resize: vertical; font-family: inherit;"></textarea>
+                    </div>
+
+                    <button type="submit" class="popup-btn" style="margin-top: 0;">
+                        <i class="fas fa-file-pdf"></i> Generar Cotizacion (PDF)
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para datos de venta (DISPONIBLE → VENDIDO) -->
+    <div id="venta-modal" class="modal">
+        <div class="modal-content" style="max-width: 560px;">
+            <div class="modal-header">
+                <h2 id="venta-modal-title"><i class="fas fa-handshake"></i> Registrar Venta</h2>
+                <button class="modal-close" id="close-venta-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="venta-info-reserva" style="display:none; padding:10px; background:#fef9c3; border-left:4px solid #f59e0b; border-radius:8px; margin-bottom:15px; font-size:13px;">
+                    <i class="fas fa-info-circle" style="color:#f59e0b;"></i> <strong>Consolidación de Venta</strong> — Datos pre-cargados desde la reserva. Verifique y complete los campos faltantes.
+                </div>
+                <form id="venta-form">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                        <div>
+                            <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                                <i class="fas fa-user"></i> Nombre del Cliente *
+                            </label>
+                            <input type="text" id="venta-cliente" required placeholder="Nombre completo" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                                <i class="fas fa-id-card"></i> Carnet de Identidad *
+                            </label>
+                            <input type="text" id="venta-ci" required placeholder="Ej: 1234567 LP" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                            <i class="fas fa-phone"></i> Número de Celular *
+                        </label>
+                        <input type="tel" id="venta-celular" required placeholder="Ej: 77771234" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                        <div>
+                            <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                                <i class="fas fa-dollar-sign"></i> Precio de Venta ($us) *
+                            </label>
+                            <input type="number" id="venta-precio" required placeholder="" step="0.01" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                                <i class="fas fa-coins"></i> Precio en Bolivianos (Bs) *
+                            </label>
+                            <input type="number" id="venta-monto-bs" required placeholder="" step="0.01" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                            <i class="fas fa-handshake"></i> Tipo de Venta *
+                        </label>
+                        <select id="venta-tipo" required style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px; background:white;">
+                            <option value="">Seleccione...</option>
+                            <option value="CONTADO">CONTADO</option>
+                            <option value="CREDITO">CRÉDITO</option>
+                        </select>
+                    </div>
+
+                    <div id="venta-cuotas-container" style="display:none; margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                            <i class="fas fa-calendar-alt"></i> Meses Plazo (N° de Cuotas) *
+                        </label>
+                        <input type="number" id="venta-cuotas" min="1" max="240" placeholder="Ej: 24" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                        <small style="color:#64748b;">Cada mes = 1 cuota</small>
+                    </div>
+
+                    <div id="venta-monto-reserva-info" style="display:none; margin-bottom:15px; padding:10px; background:#f0fdf4; border-left:4px solid #22c55e; border-radius:8px;">
+                        <i class="fas fa-piggy-bank" style="color:#22c55e;"></i> <strong>Monto de Reserva:</strong> <span id="venta-reserva-monto-display">Bs 0</span> — <small style="color:#64748b;">Se descontará de la primera cuota.</small>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                            <i class="fas fa-user-tie"></i> Vendedor (Usuario) *
+                        </label>
+                        <input type="text" id="venta-vendedor" required readonly placeholder="Usuario logueado" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px; background:#f8fafc;">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:0;">
+                        <button type="submit" class="popup-btn" style="margin:0; background:var(--primary-color); color:#fff;">
+                            <i class="fas fa-save"></i> Registrar Venta
+                        </button>
+                        <button type="button" id="omitir-registro-btn" class="popup-btn" style="margin:0; background:#64748b; color:#fff;">
+                            <i class="fas fa-forward"></i> Omitir Registro
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para datos de RESERVA (DISPONIBLE → RESERVADO) -->
+    <div id="reserva-modal" class="modal">
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-bookmark"></i> Registrar Reserva</h2>
+                <button class="modal-close" id="close-reserva-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="reserva-form">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                        <div>
+                            <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                                <i class="fas fa-user"></i> Nombre del Cliente *
+                            </label>
+                            <input type="text" id="reserva-cliente" required placeholder="Nombre completo" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                                <i class="fas fa-id-card"></i> Carnet de Identidad *
+                            </label>
+                            <input type="text" id="reserva-ci" required placeholder="Ej: 1234567 LP" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                            <i class="fas fa-phone"></i> Número de Celular *
+                        </label>
+                        <input type="tel" id="reserva-celular" required placeholder="Ej: 77771234" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--primary-color);">
+                            <i class="fas fa-coins"></i> Monto de Reserva (Bs) *
+                        </label>
+                        <input type="number" id="reserva-monto" required placeholder="" step="0.01" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                    </div>
+                    <button type="submit" class="popup-btn" style="width:100%; margin:0;">
+                        <i class="fas fa-save"></i> Guardar Reserva
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para volver a DISPONIBLE -->
+    <div id="confirm-disponible-modal" class="modal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header" style="background:#dc2626;">
+                <h2 style="color:white;"><i class="fas fa-exclamation-triangle"></i> Confirmar Cambio</h2>
+            </div>
+            <div class="modal-body" style="text-align:center; padding:30px;">
+                <i class="fas fa-question-circle" style="font-size:48px; color:#dc2626; margin-bottom:15px;"></i>
+                <p style="font-size:16px; font-weight:600; margin-bottom:10px;">¿Está seguro de cambiar el lote a DISPONIBLE?</p>
+                <p style="font-size:13px; color:#64748b; margin-bottom:25px;">Esta acción borrará los datos del cliente y la venta/reserva registrada.</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                    <button id="confirm-disponible-si" class="popup-btn" style="margin:0; background:#dc2626; color:#fff;">
+                        <i class="fas fa-check"></i> Sí, Cambiar
+                    </button>
+                    <button id="confirm-disponible-no" class="popup-btn" style="margin:0; background:#64748b; color:#fff;">
+                        <i class="fas fa-times"></i> No, Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para módulo de cobros y facturación -->
+    <div id="cobros-modal" class="modal">
+        <div class="modal-content" style="max-width: 960px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-cash-register"></i> Módulo de Cobros y Facturación</h2>
+                <button class="modal-close" id="close-cobros-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Solo tab vendidos - adelanto desde reserva se abre directo al reservar -->
+                <div id="cobros-tab-vendidos" class="cobros-tab-panel active">
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+                    <!-- Panel izquierdo: Selector de lote -->
+                    <div>
+                        <h3 style="margin-bottom: 15px; color: var(--primary-color);">
+                            <i class="fas fa-map-marked-alt"></i> Seleccionar Lote
+                        </h3>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Urbanización</label>
+                            <select id="cobros-urb-select" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                                <option value="">Seleccione...</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Lote</label>
+                            <div style="position: relative; margin-bottom: 5px;">
+                                <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;"></i>
+                                <input type="text" id="cobros-lote-buscar" placeholder="Buscar por manzano, lote o cliente..." style="width: 100%; padding: 10px 10px 10px 35px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;" disabled>
+                            </div>
+                            <select id="cobros-lote-select" size="8" style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px;" disabled>
+                                <option value="">Seleccione urbanización primero...</option>
+                            </select>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                            <button type="button" id="seleccionar-desde-mapa-btn" class="popup-btn" style="flex:1; margin:0; padding:8px; font-size:13px; background:#0891b2; color:#fff;" disabled>
+                                <i class="fas fa-map-marker-alt"></i> Seleccionar desde Mapa
+                            </button>
+                        </div>
+                        
+                        <!-- Información del lote seleccionado -->
+                        <div id="cobros-lote-info" style="display: none; padding: 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 15px;">
+                            <h4 style="margin-bottom: 10px; color: #111827; font-size:13px; font-weight:700;">Información del Lote</h4>
+                            <p style="margin: 5px 0; font-size:13px;"><strong>Cliente:</strong> <span id="info-cliente">-</span></p>
+                            <p style="margin: 5px 0; font-size:13px;"><strong>CI:</strong> <span id="info-ci">-</span></p>
+                            <p style="margin: 5px 0; font-size:13px;"><strong>Precio ($us):</strong> <span id="info-precio">-</span></p>
+                            <p style="margin: 5px 0; font-size:13px;"><strong>Precio (Bs):</strong> <span id="info-precio-bs" style="color:#059669; font-weight:700;">-</span></p>
+                            <p style="margin: 5px 0; font-size:13px;"><strong>Total Cobrado:</strong> <span id="info-total-cobrado">Bs 0</span></p>
+                            <p style="margin: 5px 0; font-size:13px;"><strong>Saldo Pendiente:</strong> <span id="info-saldo">-</span></p>
+                            <div id="info-monto-reserva-panel" style="display:none; margin-top:8px; padding:8px 10px; background:#fefce8; border:1px solid #fde047; border-radius:7px; font-size:12px;"></div>
+                        </div>
+                        
+                        <button id="registrar-cobro-btn" class="popup-btn" style="width: 100%;" disabled>
+                            <i class="fas fa-cash-register"></i> Registrar Cobro
+                        </button>
+                    </div>
+                    
+                    <!-- Panel derecho: Historial de cobros -->
+                    <div>
+                        <h3 style="margin-bottom: 15px; color: var(--primary-color);">
+                            <i class="fas fa-history"></i> Historial de Cobros
+                        </h3>
+                        <div id="cobros-historial" style="max-height: 400px; overflow-y: auto;">
+                            <p style="text-align: center; color: #64748b; padding: 40px;">
+                                Seleccione un lote para ver su historial de cobros
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                </div><!-- fin tab vendidos -->
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal integrado: Cobro + Facturación -->
+    <div id="nuevo-cobro-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 92vh; overflow-y: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); padding: 18px 24px;">
+                <h2 style="color:rgb(161, 0, 0); display:flex; align-items:center; gap:10px;">
+                    <i class="fas fa-cash-register"></i> Registrar Cobro y Facturación
+                </h2>
+                <button class="modal-close" id="close-nuevo-cobro-modal" style="color:rgb(255, 0, 0);">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+
+                <!-- Banner descuento reserva -->
+                <div id="cobro-reserva-descuento-info" style="display:none; padding:12px 24px; background:#f0fdf4; border-bottom:2px solid #22c55e; font-size:13px;">
+                    <i class="fas fa-piggy-bank" style="color:#22c55e;"></i> <strong>Descuento por Reserva:</strong>
+                    <span id="cobro-reserva-monto-display">Bs 0</span> se descontará de esta primera cuota.
+                </div>
+
+                <form id="nuevo-cobro-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 500px;">
+
+                        <!-- ===== COLUMNA IZQUIERDA: COBRO ===== -->
+                        <div style="padding: 20px 24px; border-right: 2px solid #e2e8f0; background: #fafbff;">
+                            <h3 style="color: var(--primary-color); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-coins" style="color:#f59e0b;"></i> Datos del Cobro
+                            </h3>
+
+                            <!-- Info cliente (readonly, solo display) -->
+                            <div id="cobro-cliente-resumen" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px; margin-bottom:16px; font-size:13px;">
+                                <div style="font-weight:700; color:#1e40af; margin-bottom:4px;">
+                                    <i class="fas fa-user-circle"></i> <span id="cobro-resumen-nombre">—</span>
+                                </div>
+                                <div style="color:#3b82f6;"><i class="fas fa-id-card"></i> CI: <span id="cobro-resumen-ci">—</span> &nbsp;|&nbsp; <i class="fas fa-phone"></i> <span id="cobro-resumen-cel">—</span></div>
+                                <div style="color:#6b7280; margin-top:4px; font-size:12px;"><i class="fas fa-map-marker-alt"></i> <span id="cobro-resumen-lote">—</span></div>
+                            </div>
+
+                            <div style="margin-bottom: 14px;">
+                                <label style="display:block; margin-bottom:5px; font-weight:600; font-size:13px; color:#374151;">
+                                    <i class="fas fa-money-bill-wave" style="color:#059669;"></i> Monto (Bs) *
+                                </label>
+                                <input type="number" id="nuevo-cobro-monto" required placeholder="" step="0.01"
+                                    style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px; font-size:15px; font-weight:600;">
+                            </div>
+
+                            <div style="margin-bottom: 14px;">
+                                <label style="display:block; margin-bottom:5px; font-weight:600; font-size:13px; color:#374151;">
+                                    <i class="fas fa-calendar-alt" style="color:#3b82f6;"></i> Fecha de Cobro *
+                                </label>
+                                <input type="date" id="nuevo-cobro-fecha" required
+                                    style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px;">
+                            </div>
+
+                            <div style="margin-bottom: 14px;">
+                                <label style="display:block; margin-bottom:5px; font-weight:600; font-size:13px; color:#374151;">
+                                    <i class="fas fa-list-ol" style="color:#8b5cf6;"></i> N° de Cuota
+                                </label>
+                                <input type="number" id="nuevo-cobro-cuota" required readonly
+                                    style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:8px; background:#f1f5f9; font-weight:700; font-size:15px; color:#7c3aed;">
+                                <small style="color:#94a3b8; font-size:11px;">Asignado automáticamente</small>
+                            </div>
+
+                            <!-- Botón solo guardar cobro -->
+                            <button type="submit" class="popup-btn" style="width:100%; margin:0; background:#64748b; color:#fff; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                <i class="fas fa-save"></i> Solo Guardar Cobro (sin factura)
+                            </button>
+                        </div>
+
+                        <!-- ===== COLUMNA DERECHA: FACTURACIÓN ===== -->
+                        <div style="padding: 20px 24px; background: #fff;">
+                            <h3 style="color: #7c3aed; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #ede9fe; display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-file-invoice" style="color:#7c3aed;"></i> Datos de Factura
+                            </h3>
+
+                            <!-- Datos emisor colapsable -->
+                            <details open style="margin-bottom:14px; border:1px solid #ede9fe; border-radius:8px; overflow:hidden;">
+                                <summary style="padding:10px 14px; background:#f5f3ff; cursor:pointer; font-weight:700; font-size:13px; color:#6d28d9; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                                    <span><i class="fas fa-building"></i> Datos del Emisor</span>
+                                    <i class="fas fa-chevron-down" style="font-size:11px;"></i>
+                                </summary>
+                                <div style="padding:12px 14px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                    <div>
+                                        <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">NIT Empresa *</label>
+                                        <input type="text" id="fact-nit-empresa" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="1299492010">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Razón Social *</label>
+                                        <input type="text" id="fact-razon-social" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="INGRESE RAZÓN SOCIAL">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Dirección *</label>
+                                        <input type="text" id="fact-direccion" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="CALLE MURILLO N° 210">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Municipio *</label>
+                                        <input type="text" id="fact-municipio" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="LA PAZ">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Teléfono</label>
+                                        <input type="text" id="fact-telefono" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="5882234">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Sucursal</label>
+                                        <input type="text" id="fact-sucursal" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="VILLA PRIMERO DE MAYO">
+                                    </div>
+                                </div>
+                            </details>
+
+                            <!-- Datos del cliente (pre-llenados desde el lote) -->
+                            <div style="margin-bottom:14px; padding:12px 14px; border:1px solid #d1fae5; border-radius:8px; background:#f0fdf4;">
+                                <div style="font-weight:700; font-size:12px; color:#065f46; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                                    <i class="fas fa-user-check"></i> Datos del Cliente (editables)
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                    <div>
+                                        <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">NIT / CI *</label>
+                                        <input type="text" id="fact-cliente-ci" placeholder="Carnet o NIT"
+                                            style="width:100%; padding:7px; border:1px solid #a7f3d0; border-radius:6px; font-size:13px; background:#fafffe;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Nombre Completo *</label>
+                                        <input type="text" id="fact-cliente-nombre" placeholder="Nombre del cliente"
+                                            style="width:100%; padding:7px; border:1px solid #a7f3d0; border-radius:6px; font-size:13px; background:#fafffe;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Número de factura y tipo -->
+                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+                                <div>
+                                    <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">N° Factura *</label>
+                                    <input type="text" id="fact-numero" placeholder="Auto" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Tipo</label>
+                                    <select id="fact-tipo" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;">
+                                        <option value="FACTURA">FACTURA</option>
+                                        <option value="RECIBO">RECIBO</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">CUF</label>
+                                    <input type="text" id="fact-cuf" readonly style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:10px; background:#f8fafc; color:#64748b;">
+                                </div>
+                            </div>
+
+                            <!-- Detalle -->
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Descripción *</label>
+                                <input type="text" id="fact-descripcion" placeholder="Ej: Pago Cuota N°1 — Lote 5 Mz A"
+                                    style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;">
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+                                <div>
+                                    <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Cantidad</label>
+                                    <input type="number" id="fact-cantidad" value="1" min="1" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Precio/Monto</label>
+                                    <input type="number" id="fact-monto" placeholder="0.00" step="0.01" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Descuento</label>
+                                    <input type="number" id="fact-descuento" value="0" step="0.01" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;">
+                                </div>
+                            </div>
+
+                            <!-- Total -->
+                            <div style="background:#f5f3ff; border:2px solid #ede9fe; border-radius:10px; padding:10px 14px; margin-bottom:14px; text-align:right;">
+                                <div style="font-size:12px; color:#6d28d9; font-weight:600; margin-bottom:2px;">TOTAL A PAGAR</div>
+                                <div id="fact-total-display" style="font-size:22px; font-weight:800; color:#7c3aed;">Bs 0.00</div>
+                                <div id="fact-literal-display" style="font-size:10px; color:#8b5cf6; font-style:italic; margin-top:2px;"></div>
+                            </div>
+
+                            <!-- Botón guardar cobro + generar factura -->
+                            <button type="button" id="generar-factura-cobro-btn" class="popup-btn"
+                                style="width:100%; margin:0; background:linear-gradient(135deg,#7c3aed,#5b21b6); font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                <i class="fas fa-file-invoice-dollar"></i> Guardar Cobro y Generar Factura PDF
+                            </button>
+                            <button type="button" id="omitir-factura-cobro-btn" class="popup-btn"
+                                style="width:100%; margin:8px 0 0; background:#64748b; font-size:13px; padding:10px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                <i class="fas fa-forward"></i> Omitir Factura — Guardar SIN Factura
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para exportar a Excel -->
+    <div id="excel-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-excel"></i> Exportar a Excel</h2>
+                <button class="modal-close" id="close-excel-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; color: var(--text-dark);">Seleccione la urbanización para exportar:</p>
+                <div id="urb-list-excel" style="max-height: 300px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL DASHBOARD ===================== -->
+    <div id="dashboard-modal" class="modal">
+        <div class="modal-content" style="max-width:1100px; max-height:90vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-pie"></i> Dashboard General</h2>
+                <button class="modal-close" id="close-dashboard-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; justify-content:flex-end; margin-bottom:15px; gap:10px;">
+                    <button id="dashboard-pdf-btn" class="popup-btn" style="margin:0; background:#dc2626; color:#fff;">
+                        <i class="fas fa-file-pdf"></i> IMPRIMIR EL DASHBOARD DE LA EMPRESA (PDF)
+                    </button>
+                </div>
+                <div id="dashboard-content">
+                    <p style="text-align:center; color:#64748b; padding:40px;"><i class="fas fa-spinner fa-spin"></i> Cargando datos...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL REPORTES ===================== -->
+    <div id="reportes-modal" class="modal">
+        <div class="modal-content" style="max-width:1000px; max-height:90vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-bar"></i> Módulo de Reportes</h2>
+                <button class="modal-close" id="close-reportes-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div style="display:flex; gap:5px; margin-bottom:20px; border-bottom:2px solid #e2e8f0; padding-bottom:10px; flex-wrap:wrap;">
+                    <button class="reporte-tab-btn active" data-tab="ventas" style="padding:8px 16px; border:none; border-radius:8px 8px 0 0; cursor:pointer; font-weight:600; background:var(--primary-color); color:white;">
+                        <i class="fas fa-chart-line"></i> Ventas por Vendedor
+                    </button>
+                    <button class="reporte-tab-btn" data-tab="clientes" style="padding:8px 16px; border:none; border-radius:8px 8px 0 0; cursor:pointer; font-weight:600; background:#e2e8f0; color:#64748b;">
+                        <i class="fas fa-users"></i> Reporte de Clientes
+                    </button>
+                    <button class="reporte-tab-btn" data-tab="pagos" style="padding:8px 16px; border:none; border-radius:8px 8px 0 0; cursor:pointer; font-weight:600; background:#e2e8f0; color:#64748b;">
+                        <i class="fas fa-receipt"></i> Pagos por Cliente
+                    </button>
+                </div>
+
+                <!-- Filtros -->
+                <div id="reporte-filtros" style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; margin-bottom:20px; padding:15px; background:#f8fafc; border-radius:8px;">
+                    <div>
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Desde</label>
+                        <input type="date" id="reporte-fecha-desde" style="width:100%; padding:8px; border:2px solid #e2e8f0; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Hasta</label>
+                        <input type="date" id="reporte-fecha-hasta" style="width:100%; padding:8px; border:2px solid #e2e8f0; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Urbanización</label>
+                        <select id="reporte-urb-filtro" style="width:100%; padding:8px; border:2px solid #e2e8f0; border-radius:6px;">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; align-items:flex-end; gap:5px;">
+                        <button id="reporte-buscar-btn" class="popup-btn" style="margin:0; padding:9px 16px; white-space:nowrap;">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                        <button id="reporte-pdf-btn" class="popup-btn" style="margin:0; padding:9px 16px; background:#dc2626; color:#fff; white-space:nowrap;">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Contenido del reporte -->
+                <div id="reporte-contenido">
+                    <p style="text-align:center; color:#64748b; padding:40px;">Aplique filtros y presione <strong>Filtrar</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL FACTURA ===================== -->
+
+
+    <!-- ===================== MODAL FACTURA DE RESERVA ===================== -->
+    <div id="factura-reserva-modal" class="modal">
+        <div class="modal-content" style="max-width:900px; max-height:92vh; overflow-y:auto;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:18px 24px;">
+                <h2 style="color:white; display:flex; align-items:center; gap:10px;">
+                    <i class="fas fa-bookmark"></i> Factura de Adelanto / Reserva
+                    <span class="reserva-factura-badge">RESERVADO</span>
+                </h2>
+                <button class="modal-close" id="close-factura-reserva-modal" style="color:white;"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding:0;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; min-height:480px;">
+                    <div style="padding:20px 24px; border-right:2px solid #fde68a; background:#fffbeb;">
+                        <h3 style="color:#d97706; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #fde68a; display:flex; align-items:center; gap:8px;"><i class="fas fa-bookmark" style="color:#f59e0b;"></i> Datos del Adelanto</h3>
+                        <div id="reserva-factura-cliente-resumen" style="background:#fef9c3; border:1px solid #fde68a; border-radius:10px; padding:12px; margin-bottom:16px; font-size:13px;">
+                            <div style="font-weight:700; color:#92400e; margin-bottom:4px;"><i class="fas fa-user-circle"></i> <span id="res-fac-nombre">—</span></div>
+                            <div style="color:#b45309;"><i class="fas fa-id-card"></i> CI: <span id="res-fac-ci">—</span> &nbsp;|&nbsp; <i class="fas fa-phone"></i> <span id="res-fac-cel">—</span></div>
+                            <div style="color:#78350f; margin-top:4px; font-size:12px;"><i class="fas fa-map-marker-alt"></i> <span id="res-fac-lote">—</span></div>
+                        </div>
+                        <div style="background:#fef3c7; border:2px solid #fde68a; border-radius:10px; padding:14px; text-align:center; margin-bottom:16px;">
+                            <div style="font-size:11px; font-weight:700; color:#92400e; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Monto de Reserva</div>
+                            <div style="font-size:28px; font-weight:900; color:#d97706;" id="res-fac-monto-display">Bs 0.00</div>
+                            <div style="font-size:11px; color:#b45309; margin-top:2px;" id="res-fac-literal">—</div>
+                        </div>
+                        <div style="font-size:12px; color:#92400e; background:#fffbeb; padding:10px; border-radius:8px; border-left:3px solid #f59e0b;"><i class="fas fa-info-circle"></i> Esta factura corresponde al <strong>monto de adelanto/reserva</strong>. El saldo se facturará al registrar la venta.</div>
+                    </div>
+                    <div style="padding:20px 24px; background:#fff;">
+                        <h3 style="color:#7c3aed; margin-bottom:18px; padding-bottom:10px; border-bottom:2px solid #ede9fe; display:flex; align-items:center; gap:8px;"><i class="fas fa-file-invoice" style="color:#7c3aed;"></i> Datos de Factura</h3>
+                        <details open style="margin-bottom:14px; border:1px solid #ede9fe; border-radius:8px; overflow:hidden;">
+                            <summary style="padding:10px 14px; background:#f5f3ff; cursor:pointer; font-weight:700; font-size:13px; color:#6d28d9; list-style:none; display:flex; justify-content:space-between; align-items:center;"><span><i class="fas fa-building"></i> Datos del Emisor</span><i class="fas fa-chevron-down" style="font-size:11px;"></i></summary>
+                            <div style="padding:12px 14px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">NIT Empresa *</label><input type="text" id="res-fact-nit-empresa" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="1299492010"></div>
+                                <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Razón Social *</label><input type="text" id="res-fact-razon-social" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="INGRESE RAZÓN SOCIAL"></div>
+                                <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Dirección *</label><input type="text" id="res-fact-direccion" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="CALLE MURILLO N° 210"></div>
+                                <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Municipio *</label><input type="text" id="res-fact-municipio" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="LA PAZ"></div>
+                                <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Teléfono</label><input type="text" id="res-fact-telefono" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="5882234"></div>
+                                <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Sucursal</label><input type="text" id="res-fact-sucursal" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" value="VILLA PRIMERO DE MAYO"></div>
+                            </div>
+                        </details>
+                        <div style="margin-bottom:14px; padding:12px 14px; border:1px solid #fde68a; border-radius:8px; background:#fffbeb;">
+                            <div style="font-weight:700; font-size:12px; color:#92400e; margin-bottom:8px;"><i class="fas fa-user-check"></i> Datos del Cliente</div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">NIT / CI *</label><input type="text" id="res-fact-cliente-ci" placeholder="Carnet o NIT" style="width:100%; padding:7px; border:1px solid #fde68a; border-radius:6px; font-size:13px; background:#fafffe;"></div>
+                                <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Nombre Completo *</label><input type="text" id="res-fact-cliente-nombre" placeholder="Nombre del cliente" style="width:100%; padding:7px; border:1px solid #fde68a; border-radius:6px; font-size:13px; background:#fafffe;"></div>
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+                            <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">N° Factura *</label><input type="text" id="res-fact-numero" placeholder="Auto" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;"></div>
+                            <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Tipo</label><select id="res-fact-tipo" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;"><option value="RECIBO">RECIBO</option><option value="FACTURA">FACTURA</option></select></div>
+                            <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">CUF</label><input type="text" id="res-fact-cuf" readonly style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:10px; background:#f8fafc; color:#64748b;"></div>
+                        </div>
+                        <div style="margin-bottom:12px;"><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Descripción *</label><input type="text" id="res-fact-descripcion" placeholder="Ej: Adelanto/Reserva — Lote 5 Mz A" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;"></div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+                            <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Monto (Bs)</label><input type="number" id="res-fact-monto" placeholder="0.00" step="0.01" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;" readonly></div>
+                            <div><label style="font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:3px;">Descuento</label><input type="number" id="res-fact-descuento" value="0" step="0.01" style="width:100%; padding:7px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;"></div>
+                        </div>
+                        <div style="background:#fef9c3; border:2px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:14px; text-align:right;">
+                            <div style="font-size:12px; color:#92400e; font-weight:600; margin-bottom:2px;">TOTAL A PAGAR</div>
+                            <div id="res-fact-total-display" style="font-size:22px; font-weight:800; color:#d97706;">Bs 0.00</div>
+                            <div id="res-fact-literal-display" style="font-size:10px; color:#b45309; font-style:italic; margin-top:2px;"></div>
+                        </div>
+                        <button type="button" id="generar-factura-reserva-btn" class="popup-btn" style="width:100%; margin:0; background:linear-gradient(135deg,#f59e0b,#d97706); font-size:14px; padding:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <i class="fas fa-file-invoice-dollar"></i> Generar Factura de Adelanto PDF
+                        </button>
+                        <button type="button" id="omitir-factura-reserva-btn" class="popup-btn" style="width:100%; margin:8px 0 0; background:#64748b; font-size:13px; padding:10px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <i class="fas fa-forward"></i> Omitir — Continuar SIN Factura
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== OVERLAY ALERTAS PERSONALIZADAS ===================== -->
+    <div id="custom-alert-overlay">
+        <div class="custom-alert-box" id="custom-alert-box">
+            <div class="alert-icon-wrap" id="alert-icon-wrap"></div>
+            <div class="alert-title" id="alert-title">Título</div>
+            <div class="alert-message" id="alert-message">Mensaje</div>
+            <div class="alert-btn-row" id="alert-btn-row"></div>
+        </div>
+    </div>
+
+    <!-- ===================== TOAST CONTAINER ===================== -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts externos -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    
+    <!-- 📄 Librerías para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Librería para exportar a Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- QR Code para factura -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <!-- Chart.js para dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Script personalizado -->
+    <script src="map.js"></script>
+</body>
+</html>
